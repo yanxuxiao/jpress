@@ -26,6 +26,7 @@ public class Consts {
 	public static final String ROUTER_USER = "/user";
 	public static final String ROUTER_USER_CENTER = ROUTER_USER + "/center";
 	public static final String ROUTER_USER_LOGIN = ROUTER_USER + "/login";
+	public static final String ROUTER_ABOUT = "/about";
 
 	public static final int ERROR_CODE_NOT_VALIDATE_CAPTHCHE = 1;
 	public static final int ERROR_CODE_USERNAME_EMPTY = 2;
