@@ -18,6 +18,8 @@ package io.jpress.front.controller;
 import java.math.BigInteger;
 import java.util.List;
 
+import com.jfinal.render.Render;
+
 import io.jpress.Consts;
 import io.jpress.core.BaseFrontController;
 import io.jpress.core.addon.HookInvoker;
@@ -28,9 +30,12 @@ import io.jpress.model.query.ContentQuery;
 import io.jpress.model.query.TaxonomyQuery;
 import io.jpress.model.query.UserQuery;
 import io.jpress.router.RouterMapping;
-import io.jpress.template.TemplateUtils;
+import io.jpress.template.TemplateManager;
+import io.jpress.template.TplModule;
 import io.jpress.ui.freemarker.tag.CommentPageTag;
-import io.jpress.ui.freemarker.tag.MenuTag;
+import io.jpress.ui.freemarker.tag.MenusTag;
+import io.jpress.ui.freemarker.tag.NextContentTag;
+import io.jpress.ui.freemarker.tag.PreviousContentTag;
 import io.jpress.utils.StringUtils;
 
 @RouterMapping(url = Consts.ROUTER_CONTENT)
@@ -43,11 +48,16 @@ public class ContentController extends BaseFrontController {
 	@ActionCache
 	public void index() {
 		try {
-			onRenderBefore();
-			doRender();
+			Render render = onRenderBefore();
+			if (render != null) {
+				render(render);
+			} else {
+				doRender();
+			}
 		} finally {
 			onRenderAfter();
 		}
+
 	}
 
 	private void doRender() {
@@ -59,7 +69,9 @@ public class ContentController extends BaseFrontController {
 			return;
 		}
 
-		if (TemplateUtils.currentTemplate().getModuleByName(content.getModule()) == null) {
+		TplModule module = TemplateManager.me().currentTemplateModule(content.getModule());
+
+		if (module == null) {
 			renderError(404);
 			return;
 		}
@@ -69,23 +81,45 @@ public class ContentController extends BaseFrontController {
 
 		setAttr("p", page);
 		setAttr("content", content);
-		setAttr("nextContent", ContentQuery.me().findNext(content));
-		setAttr("previousContent", ContentQuery.me().findPrevious(content));
+		
+		setAttr("next", new NextContentTag(content));
+		setAttr("previous", new PreviousContentTag(content));
+		
 		setAttr("user", UserQuery.me().findById(content.getUserId()));
 
-		setAttr("commentPageTag", new CommentPageTag(content, page));
+		setAttr("commentPage", new CommentPageTag(getRequest(), content, page));
 
 		List<Taxonomy> taxonomys = TaxonomyQuery.me().findListByContentId(content.getId());
 		setAttr("taxonomys", taxonomys);
-
-		setAttr("jp_menu", new MenuTag(getRequest(), taxonomys, content));
+		setAttr(MenusTag.TAG_NAME, new MenusTag(getRequest(), taxonomys, content));
 
 		String style = content.getStyle();
 		if (StringUtils.isNotBlank(style)) {
-			render(String.format("content_%s_%s.html", content.getModule(), style.trim()));
-		} else {
-			render(String.format("content_%s.html", content.getModule()));
+			render(String.format("content_%s_%s.html", module.getName(), style.trim()));
+			return;
 		}
+
+		if (taxonomys != null && !taxonomys.isEmpty()) {
+			String forSlug = null;
+			for (Taxonomy taxonomy : taxonomys) {
+				String tFile = String.format("content_%s_for:%s.html", module.getName(), taxonomy.getSlug());
+				if (templateExists(tFile)) {
+					if (forSlug == null) {
+						forSlug = "for:" + taxonomy.getSlug();
+					} else {
+						forSlug = null;
+						break;
+					}
+				}
+			}
+
+			if (forSlug != null) {
+				render(String.format("content_%s_%s.html", module.getName(), forSlug));
+				return;
+			}
+		}
+
+		render(String.format("content_%s.html", module.getName()));
 
 	}
 
@@ -145,8 +179,8 @@ public class ContentController extends BaseFrontController {
 
 	}
 
-	private void onRenderBefore() {
-		HookInvoker.contentRenderBefore(this);
+	private Render onRenderBefore() {
+		return HookInvoker.contentRenderBefore(this);
 	}
 
 	private void onRenderAfter() {

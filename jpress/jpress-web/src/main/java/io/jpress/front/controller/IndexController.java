@@ -15,6 +15,8 @@
  */
 package io.jpress.front.controller;
 
+import com.jfinal.render.Render;
+
 import io.jpress.Consts;
 import io.jpress.core.BaseFrontController;
 import io.jpress.core.addon.HookInvoker;
@@ -30,8 +32,12 @@ public class IndexController extends BaseFrontController {
 	@ActionCache
 	public void index() {
 		try {
-			onRenderBefore();
-			doRender();
+			Render render = onRenderBefore();
+			if (render != null) {
+				render(render);
+			} else {
+				doRender();
+			}
 		} finally {
 			onRenderAfter();
 		}
@@ -43,7 +49,7 @@ public class IndexController extends BaseFrontController {
 		String para = getPara();
 
 		if (StringUtils.isBlank(para)) {
-			setAttr("indexPage", new IndexPageTag(null, 1));
+			setAttr("indexPage", new IndexPageTag(getRequest(), null, 1, null));
 			render("index.html");
 			return;
 		}
@@ -51,21 +57,21 @@ public class IndexController extends BaseFrontController {
 		String[] paras = para.split("-");
 		if (paras.length == 1) {
 			if (StringUtils.isNumeric(para.trim())) {
-				setAttr("indexPage", new IndexPageTag(null, StringUtils.toInt(para.trim(), 1)));
+				setAttr("indexPage", new IndexPageTag(getRequest(), null, StringUtils.toInt(para.trim(), 1), null));
 				render("index.html");
 			} else {
-				setAttr("indexPage", new IndexPageTag(para.trim(), 1));
+				setAttr("indexPage", new IndexPageTag(getRequest(), para.trim(), 1, null));
 				render("page_" + para + ".html");
 			}
 		} else if (paras.length == 2) {
 			String pageName = paras[0];
 			String pageNumber = paras[1];
-			
-			if(!StringUtils.isNumeric(pageNumber)){
+
+			if (!StringUtils.isNumeric(pageNumber)) {
 				renderError(404);
 			}
-			
-			setAttr("indexPage", new IndexPageTag(pageName, StringUtils.toInt(pageNumber, 1)));
+
+			setAttr("indexPage", new IndexPageTag(getRequest(), pageName, StringUtils.toInt(pageNumber, 1), null));
 			render("page_" + pageName + ".html");
 		} else {
 			renderError(404);
@@ -91,8 +97,8 @@ public class IndexController extends BaseFrontController {
 		}
 	}
 
-	private void onRenderBefore() {
-		HookInvoker.indexRenderBefore(this);
+	private Render onRenderBefore() {
+		return HookInvoker.indexRenderBefore(this);
 	}
 
 	private void onRenderAfter() {

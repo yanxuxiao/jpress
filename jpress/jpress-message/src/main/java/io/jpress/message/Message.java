@@ -13,30 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.jpress.plugin.message;
+package io.jpress.message;
 
-public class MessageKit {
+import java.io.Serializable;
 
-	private static MessagePlugin messagePublisher;
+public class Message implements Serializable {
 
-	static void init(MessagePlugin publisher) {
-		messagePublisher = publisher;
+	private static final long serialVersionUID = 1L;
+
+	private final long timestamp;
+	private String action;
+	private Object data;
+
+	public Message(String action, Object data) {
+		this.action = action;
+		this.data = data;
+		this.timestamp = System.currentTimeMillis();
 	}
 
-	public static void register(Class<? extends MessageListener> listenerClass) {
-		messagePublisher.registerListener(listenerClass);
+	@SuppressWarnings("unchecked")
+	public <M> M getData() {
+		return (M) data;
 	}
 
-	public static void sendMessage(Message message) {
-		messagePublisher.pulish(message);
+	public String getAction() {
+		return action;
 	}
 
-	public static void sendMessage(String action, Object data) {
-		messagePublisher.pulish(new Message(action, data));
+
+	public long getTimestamp() {
+		return this.timestamp;
 	}
-	
-	public static void sendMessage(String action) {
-		messagePublisher.pulish(new Message(action, null));
+
+	@Override
+	public String toString() {
+		return "Message [timestamp=" + timestamp + ", action=" + action + ", data=" + data + "]";
 	}
 
 }

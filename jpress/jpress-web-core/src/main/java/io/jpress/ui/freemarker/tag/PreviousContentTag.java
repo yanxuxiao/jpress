@@ -13,14 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.jpress.plugin.message;
+package io.jpress.ui.freemarker.tag;
 
-import java.util.EventListener;
+import io.jpress.core.render.freemarker.JTag;
+import io.jpress.model.Content;
+import io.jpress.model.query.ContentQuery;
 
-public interface MessageListener extends EventListener {
-	
-	public void onMessage(Message message);
-	public void onRegisterAction(MessageAction messageAction);
-	public int onGetWeight();
+public class PreviousContentTag extends JTag {
+
+	private Content currentContent;
+
+	public PreviousContentTag(Content content) {
+		this.currentContent = content;
+	}
+
+	@Override
+	public void onRender() {
+
+		Content content = ContentQuery.me().findPrevious(currentContent);
+
+		if (content == null) {
+			renderText("");
+			return;
+		}
+
+		setVariable("data", content);
+		renderBody();
+	}
 
 }

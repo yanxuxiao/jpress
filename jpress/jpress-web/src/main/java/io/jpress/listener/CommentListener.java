@@ -15,16 +15,17 @@
  */
 package io.jpress.listener;
 
+import io.jpress.message.Actions;
+import io.jpress.message.Message;
+import io.jpress.message.MessageListener;
+import io.jpress.message.annotation.Listener;
 import io.jpress.model.Comment;
 import io.jpress.model.Content;
 import io.jpress.model.query.CommentQuery;
 import io.jpress.model.query.ContentQuery;
-import io.jpress.plugin.message.Actions;
-import io.jpress.plugin.message.BaseMessageListener;
-import io.jpress.plugin.message.Message;
-import io.jpress.plugin.message.MessageAction;
 
-public class CommentListener extends BaseMessageListener {
+@Listener(action = { Actions.COMMENT_ADD, Actions.COMMENT_UPDATE, Actions.COMMENT_DELETE })
+public class CommentListener implements MessageListener {
 
 	@Override
 	public void onMessage(Message message) {
@@ -76,13 +77,6 @@ public class CommentListener extends BaseMessageListener {
 				parentComment.updateCommentCount();
 			}
 		}
-	}
-
-	@Override
-	public void onRegisterAction(MessageAction messageAction) {
-		messageAction.register(Actions.COMMENT_ADD);
-		messageAction.register(Actions.COMMENT_DELETE);
-		messageAction.register(Actions.COMMENT_UPDATE);
 	}
 
 }

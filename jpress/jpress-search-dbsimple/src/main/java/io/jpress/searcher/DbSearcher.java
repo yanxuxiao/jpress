@@ -25,7 +25,7 @@ import io.jpress.model.query.ContentQuery;
 import io.jpress.plugin.search.ISearcher;
 import io.jpress.plugin.search.SearcherBean;
 import io.jpress.template.TplModule;
-import io.jpress.template.TemplateUtils;
+import io.jpress.template.TemplateManager;
 import io.jpress.utils.StringUtils;
 
 public class DbSearcher implements ISearcher {
@@ -62,7 +62,7 @@ public class DbSearcher implements ISearcher {
 		if (StringUtils.isNotBlank(module)) {
 			moduleStrings = new String[] { module };
 		} else {
-			List<TplModule> modules = TemplateUtils.currentTemplate().getModules();
+			List<TplModule> modules = TemplateManager.me().currentTemplateModules();
 			if (modules == null || modules.size() == 0) {
 				return null;
 			}
@@ -74,17 +74,15 @@ public class DbSearcher implements ISearcher {
 		}
 
 		Page<Content> cpage = ContentQuery.me().paginate(pageNum, pageSize, moduleStrings, keyword,
-				Content.STATUS_NORMAL, null, null, null,null);
+				Content.STATUS_NORMAL, null, null, null, null);
 
 		if (cpage != null) {
 			List<SearcherBean> datas = new ArrayList<SearcherBean>();
 			for (Content c : cpage.getList()) {
-				datas.add(new SearcherBean(c.getId().toString(), c.getTitle(), c.getSummary(), c.getText(), null, null,
-						c.getUrl(), c.getCreated()));
+				datas.add(new SearcherBean(c.getId().toString(), c.getTitle(), c.getSummary(), c.getText(), c.getUrl(),c.getCreated(), c));
 			}
 
-			return new Page<>(datas, cpage.getPageNumber(), cpage.getPageSize(), cpage.getTotalPage(),
-					cpage.getTotalRow());
+			return new Page<>(datas, cpage.getPageNumber(), cpage.getPageSize(), cpage.getTotalPage(),cpage.getTotalRow());
 		}
 
 		return null;

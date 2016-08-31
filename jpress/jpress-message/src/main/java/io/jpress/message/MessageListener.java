@@ -13,33 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.jpress.plugin.message;
+package io.jpress.message;
 
-import java.util.ArrayList;
-import java.util.List;
+public interface MessageListener {
 
-public class MessageAction {
-
-	private List<String> actions = new ArrayList<String>();
-	private List<String> syncActions = new ArrayList<String>();
-
-	public void register(String action) {
-		actions.add(action);
-	}
-
-	public void register(String action, boolean sync) {
-		if (sync)
-			syncActions.add(action);
-		else
-			actions.add(action);
-	}
-
-	public List<String> getActions() {
-		return actions;
-	}
-
-	public List<String> getSyncActions() {
-		return syncActions;
-	}
+	public  void onMessage(Message message);
 
 }

@@ -15,12 +15,13 @@
  */
 package io.jpress.listener;
 
-import io.jpress.plugin.message.Actions;
-import io.jpress.plugin.message.BaseMessageListener;
-import io.jpress.plugin.message.Message;
-import io.jpress.plugin.message.MessageAction;
+import io.jpress.message.Actions;
+import io.jpress.message.Message;
+import io.jpress.message.MessageListener;
+import io.jpress.message.annotation.Listener;
 
-public class SettingChangedListener extends BaseMessageListener {
+@Listener(action = Actions.SETTING_CHANGED)
+public class SettingChangedListener implements MessageListener {
 
 	@Override
 	public void onMessage(Message message) {
@@ -28,9 +29,5 @@ public class SettingChangedListener extends BaseMessageListener {
 		//do thing
 	}
 
-	@Override
-	public void onRegisterAction(MessageAction messageAction) {
-		messageAction.register(Actions.SETTING_CHANGED);
-	}
 
 }

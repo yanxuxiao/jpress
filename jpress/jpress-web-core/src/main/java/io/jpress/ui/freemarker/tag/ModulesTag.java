@@ -20,18 +20,20 @@ import java.util.List;
 import io.jpress.core.render.freemarker.JTag;
 import io.jpress.template.TplModule;
 import io.jpress.template.Template;
-import io.jpress.template.TemplateUtils;
+import io.jpress.template.TemplateManager;
 
 public class ModulesTag extends JTag {
+	
+	public static final String TAG_NAME = "modules";
 
 	@Override
 	public void onRender() {
 
-		Template t = TemplateUtils.currentTemplate();
+		Template t = TemplateManager.me().currentTemplate();
 
 		if (t != null) {
 			List<TplModule> modules = t.getModules();
-			setVariable("modules", modules);
+			setVariable("datas", modules);
 			renderBody();
 		} else {
 			renderText("");

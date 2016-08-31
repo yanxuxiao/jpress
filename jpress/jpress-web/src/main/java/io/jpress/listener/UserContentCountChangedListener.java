@@ -15,15 +15,16 @@
  */
 package io.jpress.listener;
 
+import io.jpress.message.Actions;
+import io.jpress.message.Message;
+import io.jpress.message.MessageListener;
+import io.jpress.message.annotation.Listener;
 import io.jpress.model.Content;
 import io.jpress.model.User;
 import io.jpress.model.query.UserQuery;
-import io.jpress.plugin.message.Actions;
-import io.jpress.plugin.message.BaseMessageListener;
-import io.jpress.plugin.message.Message;
-import io.jpress.plugin.message.MessageAction;
 
-public class UserContentCountChangedListener extends BaseMessageListener {
+@Listener(action = { Actions.CONTENT_ADD, Actions.CONTENT_UPDATE, Actions.CONTENT_DELETE })
+public class UserContentCountChangedListener implements MessageListener {
 
 	@Override
 	public void onMessage(Message message) {
@@ -56,11 +57,5 @@ public class UserContentCountChangedListener extends BaseMessageListener {
 		}
 	}
 
-	@Override
-	public void onRegisterAction(MessageAction messageAction) {
-		messageAction.register(Actions.CONTENT_ADD);
-		messageAction.register(Actions.CONTENT_UPDATE);
-		messageAction.register(Actions.CONTENT_DELETE);
-	}
 
 }

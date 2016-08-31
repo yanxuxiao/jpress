@@ -15,6 +15,7 @@
  */
 package io.jpress.ui.freemarker.tag;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import io.jpress.core.render.freemarker.JTag;
@@ -22,6 +23,17 @@ import io.jpress.model.Taxonomy;
 import io.jpress.model.query.TaxonomyQuery;
 
 public class TaxonomysTag extends JTag {
+	
+	public static final String TAG_NAME = "taxonomys";
+
+	private List<Taxonomy> filterList;
+
+	public TaxonomysTag() {
+	}
+
+	public TaxonomysTag(List<Taxonomy> taxonomys) {
+		filterList = taxonomys;
+	}
 
 	@Override
 	public void onRender() {
@@ -30,11 +42,19 @@ public class TaxonomysTag extends JTag {
 		count = count <= 0 ? 10 : count;
 
 		String module = getParam("module");
+		String activeClass = getParam("activeClass", "active");
 		String type = getParam("type");
-		String orderby = getParam("orderby");
+		String orderby = getParam("orderBy");
 
-		List<Taxonomy> list = TaxonomyQuery.me().findListByModuleAndType(module, type, orderby, count);
-		setVariable("taxonomys", list);
+		BigInteger parentId = getParamToBigInteger("parentId");
+
+		List<Taxonomy> list = TaxonomyQuery.me().findListByModuleAndType(module, type, orderby, parentId, count);
+		if (filterList != null && list != null && list.size() > 0) {
+			for (Taxonomy taxonomy : list) {
+				taxonomy.initFilterList(filterList, activeClass);
+			}
+		}
+		setVariable("datas", list);
 		renderBody();
 	}
 

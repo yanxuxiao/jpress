@@ -35,9 +35,9 @@ import com.jfinal.kit.PropKit;
 import com.jfinal.kit.StrKit;
 import com.jfinal.log.Log;
 import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
+import com.jfinal.plugin.activerecord.IDataSourceProvider;
 import com.jfinal.plugin.activerecord.Model;
 import com.jfinal.plugin.druid.DruidPlugin;
-import com.jfinal.plugin.druid.DruidStatViewHandler;
 import com.jfinal.plugin.ehcache.EhCachePlugin;
 import com.jfinal.render.ViewType;
 
@@ -49,8 +49,9 @@ import io.jpress.core.interceptor.HookInterceptor;
 import io.jpress.core.interceptor.JI18nInterceptor;
 import io.jpress.core.render.JErrorRenderFactory;
 import io.jpress.core.render.JpressRenderFactory;
+import io.jpress.interceptor.AdminInterceptor;
+import io.jpress.message.plugin.MessagePlugin;
 import io.jpress.model.core.Table;
-import io.jpress.plugin.message.MessagePlugin;
 import io.jpress.router.RouterMapping;
 import io.jpress.utils.ClassScaner;
 import io.jpress.utils.StringUtils;
@@ -99,7 +100,6 @@ public abstract class JpressConfig extends JFinalConfig {
 	}
 
 	public void configPlugin(Plugins plugins) {
-		plugins.add(new MessagePlugin());
 		plugins.add(createEhCachePlugin());
 
 		if (Jpress.isInstalled()) {
@@ -108,13 +108,15 @@ public abstract class JpressConfig extends JFinalConfig {
 
 			ActiveRecordPlugin activeRecordPlugin = createRecordPlugin(druidPlugin);
 			plugins.add(activeRecordPlugin);
+
+			plugins.add(new MessagePlugin());
 		}
 	}
 
 	public EhCachePlugin createEhCachePlugin() {
-		String ehcacheDiskStorePath = PathKit.getRootClassPath();
+		String ehcacheDiskStorePath = PathKit.getWebRootPath();
 		File pathFile = new File(ehcacheDiskStorePath, ".ehcache");
-		
+
 		Configuration cfg = ConfigurationFactory.parseConfiguration();
 		cfg.addDiskStore(new DiskStoreConfiguration().path(pathFile.getAbsolutePath()));
 		return new EhCachePlugin(cfg);
@@ -136,8 +138,8 @@ public abstract class JpressConfig extends JFinalConfig {
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public ActiveRecordPlugin createRecordPlugin(DruidPlugin druidPlugin) {
-		ActiveRecordPlugin arPlugin = new ActiveRecordPlugin(druidPlugin);
+	public ActiveRecordPlugin createRecordPlugin(IDataSourceProvider dsp) {
+		ActiveRecordPlugin arPlugin = new ActiveRecordPlugin(dsp);
 		List<Class<Model>> modelClassList = ClassScaner.scanSubClass(Model.class);
 		if (modelClassList != null) {
 			String tablePrefix = PropKit.use("db.properties").get("db_tablePrefix");
@@ -163,6 +165,7 @@ public abstract class JpressConfig extends JFinalConfig {
 
 	public void configInterceptor(Interceptors interceptors) {
 		interceptors.add(new JI18nInterceptor());
+		interceptors.add(new AdminInterceptor());
 		interceptors.add(new HookInterceptor());
 	}
 
@@ -170,7 +173,7 @@ public abstract class JpressConfig extends JFinalConfig {
 		handlers.add(new ActionCacheHandler());
 		handlers.add(new JHandler());
 		handlers.add(new ActionCacheHandler());
-		DruidStatViewHandler druidViewHandler = new DruidStatViewHandler("/admin/druid");
+		MyDruidStatViewHandler druidViewHandler = new MyDruidStatViewHandler();
 		handlers.add(druidViewHandler);
 	}
 

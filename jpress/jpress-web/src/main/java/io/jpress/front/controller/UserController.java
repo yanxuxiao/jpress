@@ -26,10 +26,10 @@ import io.jpress.Consts;
 import io.jpress.core.BaseFrontController;
 import io.jpress.interceptor.UCodeInterceptor;
 import io.jpress.interceptor.UserInterceptor;
+import io.jpress.message.Actions;
+import io.jpress.message.MessageKit;
 import io.jpress.model.User;
 import io.jpress.model.query.UserQuery;
-import io.jpress.plugin.message.Actions;
-import io.jpress.plugin.message.MessageKit;
 import io.jpress.router.RouterMapping;
 import io.jpress.ui.freemarker.tag.UserContentPageTag;
 import io.jpress.utils.CookieUtils;
@@ -186,7 +186,7 @@ public class UserController extends BaseFrontController {
 			return;
 		}
 
-		if (null != mobile && UserQuery.me().findUserByPhone(mobile) != null) {
+		if (null != mobile && UserQuery.me().findUserByMobile(mobile) != null) {
 			renderForRegister("phone has exist!", Consts.ERROR_CODE_PHONE_EXIST);
 			return;
 		}

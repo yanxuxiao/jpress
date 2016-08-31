@@ -34,21 +34,19 @@ import io.jpress.core.JBaseCRUDController;
 import io.jpress.core.interceptor.ActionCacheClearInterceptor;
 import io.jpress.core.render.AjaxResult;
 import io.jpress.interceptor.UCodeInterceptor;
+import io.jpress.message.Actions;
+import io.jpress.message.MessageKit;
 import io.jpress.model.Content;
-import io.jpress.model.Metadata;
 import io.jpress.model.Taxonomy;
 import io.jpress.model.User;
 import io.jpress.model.query.ContentQuery;
 import io.jpress.model.query.MappingQuery;
-import io.jpress.model.query.MetaDataQuery;
 import io.jpress.model.query.TaxonomyQuery;
 import io.jpress.model.query.UserQuery;
-import io.jpress.plugin.message.Actions;
-import io.jpress.plugin.message.MessageKit;
 import io.jpress.router.RouterMapping;
 import io.jpress.router.RouterNotAllowConvert;
 import io.jpress.router.converter.ContentRouter;
-import io.jpress.template.TemplateUtils;
+import io.jpress.template.TemplateManager;
 import io.jpress.template.TplModule;
 import io.jpress.template.TplTaxonomyType;
 import io.jpress.utils.JsoupUtils;
@@ -70,7 +68,7 @@ public class _ContentController extends JBaseCRUDController<Content> {
 	@Override
 	public void index() {
 
-		TplModule module = TemplateUtils.currentTemplate().getModuleByName(getModuleName());
+		TplModule module = TemplateManager.me().currentTemplateModule(getModuleName());
 		setAttr("module", module);
 		setAttr("delete_count", ContentQuery.me().findCountByModuleAndStatus(getModuleName(), Content.STATUS_DELETE));
 		setAttr("draft_count", ContentQuery.me().findCountByModuleAndStatus(getModuleName(), Content.STATUS_DRAFT));
@@ -103,11 +101,18 @@ public class _ContentController extends JBaseCRUDController<Content> {
 		filterUI(tids);
 
 		setAttr("page", page);
-		render("index.html");
+
+		String include = "_index_default_include.html";
+		String templateEditHtml = String.format("admin_content_index_%s.html", module.getName());
+		if (TemplateManager.me().existsFile(templateEditHtml)) {
+			include = "../../.." + TemplateManager.me().currentTemplatePath() + "/" + templateEditHtml;
+		}
+		setAttr("include", include);
+
 	}
 
 	private void filterUI(BigInteger[] tids) {
-		TplModule module = TemplateUtils.currentTemplate().getModuleByName(getModuleName());
+		TplModule module = TemplateManager.me().currentTemplateModule(getModuleName());
 
 		if (module == null) {
 			return;
@@ -245,7 +250,7 @@ public class _ContentController extends JBaseCRUDController<Content> {
 			moduleName = content.getModule();
 		}
 
-		TplModule module = TemplateUtils.currentTemplate().getModuleByName(moduleName);
+		TplModule module = TemplateManager.me().currentTemplateModule(moduleName);
 		setAttr("module", module);
 
 		String _editor = getCookie("_editor", "tinymce");
@@ -254,16 +259,33 @@ public class _ContentController extends JBaseCRUDController<Content> {
 		setAttr("urlPreffix", ContentRouter.getContentRouterPreffix(module));
 		setAttr("urlSuffix", ContentRouter.getContentRouterSuffix(module));
 
-		if (!Consts.MODULE_PAGE.equals(moduleName)) {
-			String routerType = ContentRouter.getRouterType();
-			if (StringUtils.isBlank(routerType) || ContentRouter.TYPE_DYNAMIC_ID.equals(routerType)
-					|| ContentRouter.TYPE_STATIC_MODULE_ID.equals(routerType)
-					|| ContentRouter.TYPE_STATIC_DATE_ID.equals(routerType)
-					|| ContentRouter.TYPE_STATIC_PREFIX_ID.equals(routerType)) {
-				setAttr("slugDisplay", " style=\"display: none\"");
-			}
+		setSlugInputDisplay(moduleName);
+
+		String include = "_edit_default_include.html";
+		String templateEditHtml = String.format("admin_content_edit_%s.html", moduleName);
+		if (TemplateManager.me().existsFile(templateEditHtml)) {
+			include = "../../.." + TemplateManager.me().currentTemplatePath() + "/" + templateEditHtml;
+		}
+		setAttr("include", include);
+	}
+
+	private void setSlugInputDisplay(String moduleName) {
+		if (Consts.MODULE_PAGE.equals(moduleName)) {
+			setAttr("slugDisplay", "true");
+			return;
 		}
 
+		String routerType = ContentRouter.getRouterType();
+		if (StringUtils.isBlank(routerType)) { // 没设置过，默认id
+			return;
+		}
+
+		if (ContentRouter.TYPE_DYNAMIC_ID.equals(routerType) || ContentRouter.TYPE_STATIC_MODULE_ID.equals(routerType)
+				|| ContentRouter.TYPE_STATIC_DATE_ID.equals(routerType)
+				|| ContentRouter.TYPE_STATIC_PREFIX_ID.equals(routerType)) {
+			return;
+		}
+		setAttr("slugDisplay", "true");
 	}
 
 	public void changeEditor() {
@@ -273,7 +295,7 @@ public class _ContentController extends JBaseCRUDController<Content> {
 	}
 
 	public List<BigInteger> getOrCreateTaxonomyIds(String moduleName) {
-		TplModule module = TemplateUtils.currentTemplate().getModuleByName(moduleName);
+		TplModule module = TemplateManager.me().currentTemplateModule(moduleName);
 		List<TplTaxonomyType> types = module.getTaxonomyTypes();
 		List<BigInteger> tIds = new ArrayList<BigInteger>();
 		for (TplTaxonomyType type : types) {
@@ -349,15 +371,6 @@ public class _ContentController extends JBaseCRUDController<Content> {
 			return;
 		}
 
-		final HashMap<String, String> metas = new HashMap<String, String>();
-		Map<String, String[]> requestMap = getParaMap();
-		if (requestMap != null) {
-			for (Map.Entry<String, String[]> entry : requestMap.entrySet()) {
-				if (entry.getKey().startsWith("meta_")) {
-					metas.put(entry.getKey().substring(5), entry.getValue()[0]);
-				}
-			}
-		}
 
 		boolean saved = Db.tx(new IAtom() {
 			@Override
@@ -383,20 +396,10 @@ public class _ContentController extends JBaseCRUDController<Content> {
 					}
 				}
 
-				for (Map.Entry<String, String> entry : metas.entrySet()) {
-
-					Metadata metadata = MetaDataQuery.me().findByTypeAndIdAndKey(Content.METADATA_TYPE, content.getId(),
-							entry.getKey());
-
-					if (metadata == null) {
-						metadata = new Metadata();
-					}
-					metadata.setMetaKey(entry.getKey());
-					metadata.setMetaValue(entry.getValue());
-					metadata.setObjectId(content.getId());
-					metadata.setObjectType(Content.METADATA_TYPE);
-					if (!metadata.saveOrUpdate()) {
-						return false;
+				Map<String, String> metas = getMetas();
+				if (metas != null) {
+					for (Map.Entry<String, String> entry : metas.entrySet()) {
+						content.saveOrUpdateMetadta(entry.getKey(), entry.getValue());
 					}
 				}
 

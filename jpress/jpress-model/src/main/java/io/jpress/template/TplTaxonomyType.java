@@ -54,17 +54,18 @@ public class TplTaxonomyType {
 		this.formType = formType;
 	}
 
-	@Override
-	public String toString() {
-		return "TaxonomyType [title=" + title + ", name=" + name + ", formType=" + formType + "]";
-	}
-
 	public boolean isInputType() {
 		return TplTaxonomyType.TYPE_INPUT.equals(getFormType());
 	}
 
 	public boolean isSelectType() {
 		return TplTaxonomyType.TYPE_SELECT.equals(getFormType());
+	}
+
+	@Override
+	public String toString() {
+		return "TplTaxonomyType [title=" + title + ", name=" + name + ", formType=" + formType + ", metadatas="
+				+ metadatas + "]";
 	}
 
 }

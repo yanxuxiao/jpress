@@ -24,6 +24,7 @@ import com.jfinal.kit.PathKit;
 
 import io.jpress.model.Content;
 import io.jpress.model.query.ContentQuery;
+import io.jpress.utils.StringUtils;
 
 public class TplModule {
 
@@ -32,6 +33,8 @@ public class TplModule {
 	private String listTitle;
 	private String addTitle;
 	private String commentTitle;
+	private String iconClass;
+	private String orders;
 	private List<TplTaxonomyType> taxonomyTypes;
 	private List<TplMetadata> metadatas;
 
@@ -42,7 +45,6 @@ public class TplModule {
 	public void setTaxonomyTypes(List<TplTaxonomyType> taxonomys) {
 		this.taxonomyTypes = taxonomys;
 	}
-	
 
 	public List<TplMetadata> getMetadatas() {
 		return metadatas;
@@ -54,7 +56,7 @@ public class TplModule {
 
 	public List<String> getStyles() {
 		List<String> moduleStyles = null;
-		File f = new File(PathKit.getWebRootPath(), TemplateUtils.getTemplatePath());
+		File f = new File(PathKit.getWebRootPath(), TemplateManager.me().currentTemplatePath());
 		String[] fileNames = f.list(new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String fileName) {
@@ -111,6 +113,22 @@ public class TplModule {
 		this.name = name;
 	}
 
+	public String getIconClass() {
+		return iconClass;
+	}
+
+	public void setIconClass(String iconClass) {
+		this.iconClass = iconClass;
+	}
+
+	public String getOrders() {
+		return orders;
+	}
+
+	public void setOrders(String orders) {
+		this.orders = orders;
+	}
+
 	public TplTaxonomyType getTaxonomyTypeByType(String name) {
 		List<TplTaxonomyType> tts = taxonomyTypes;
 		if (null != tts && tts.size() > 0) {
@@ -142,11 +160,31 @@ public class TplModule {
 		return ContentQuery.me().findCountInNormalByModule(getName());
 	}
 
-	@Override
-	public String toString() {
-		return "Module [title=" + title + ", name=" + name + ", listTitle=" + listTitle + ", addTitle=" + addTitle
-				+ ", commentTitle=" + commentTitle + ", taxonomyTypes=" + taxonomyTypes + "]";
+	public boolean isSupportOrder(String order) {
+
+		if (StringUtils.isBlank(orders)) {
+			return false;
+		}
+
+		if (StringUtils.isBlank(order)) {
+			return false;
+		}
+
+		String[] orderX = orders.split(",");
+		for (int i = 0; i < orderX.length; i++) {
+			if (order.equals(orderX[i])) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
+	@Override
+	public String toString() {
+		return "TplModule [title=" + title + ", name=" + name + ", listTitle=" + listTitle + ", addTitle=" + addTitle
+				+ ", commentTitle=" + commentTitle + ", orders=" + orders + ", taxonomyTypes=" + taxonomyTypes
+				+ ", metadatas=" + metadatas + "]";
+	}
 
 }
