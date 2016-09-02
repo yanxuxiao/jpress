@@ -10,13 +10,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>${WEB_TITLE!WEB_NAME!} - ${WEB_SUBTITLE!'欢迎使用JPress'}</title>
+  <title>${WEB_TITLE!WEB_NAME!} - ${WEB_SUBTITLE!'欢迎光临!'}</title>
   <meta name="keywords" content="${META_KEYWORDS!}">
   <meta name="description" content="${META_DESCRIPTION!}">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="renderer" content="webkit">
+  <meta property="qc:admins" content="340046465761160501176375" />
+  <link href="/favicon.ico" type="image/x-icon" rel="shortcut icon">
   <link rel="stylesheet" href="${CTPATH}/assets/css/app.css"/>
   <link rel="stylesheet" href="${CTPATH}/assets/font-awesome/css/font-awesome.min.css"/>
   <link rel="stylesheet" href="${CTPATH}/assets/mediaelement/mediaelementplayer.css" />
@@ -59,13 +61,13 @@
     <div class="jblog-nav-content">
       <ul>
       	<li><a href="${CPATH}/">首页
-      	<#if "/" == REQUEST.requestURI!>
+      	<#if "/" == _request.requestURI!>
       	<span class="x-a-border"></span>
       	</#if>
       	</a>
       	</li>
-      	<@menus>
-        	<#list datas as menu>
+      	<@jp_menu>
+        	<#list menus as menu>
         		<li >
         		<a  href="${menu.url!}">
         		${menu.title!}
@@ -75,18 +77,21 @@
         		</a>
         		</li>
         	</#list>
-        </@menus>
+        </@jp_menu>
       </ul>
     </div>
   </div>
 </header>
 <#nested> 
 <footer class="footer x-sm-footer">
-  <p>${option('web_copyright')!'暂未填写版权信息'}</p>
+  <p>
+    ${option('web_copyright')!'暂未填写版权信息'}
+    &nbsp;
+    <a style='color:white;' target='_blank' href='http://www.miitbeian.gov.cn'>${option('web_icp_number')!}</a>
+    &nbsp;
+    ${option('jpblog_statistical_code')!}
+  </p>
 </footer>
-<div style="display: none;">
-${option('jpblog_statistical_code')!}
-</div>
 <@script_import />
   <script src="${CTPATH}/assets/js/jquery-2.1.1.min.js"></script>
   <script src="${CTPATH}/assets/mediaelement/mediaelement-and-player.min.js"></script>
